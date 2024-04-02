@@ -1,0 +1,2 @@
+gcc json.c -o program -ljson-c
+./program "/mnt/c/Users/medel/OneDrive/Desktop/proiect so/test_folder"
