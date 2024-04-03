@@ -1,2 +1,4 @@
 gcc json.c -o program -ljson-c
-./program "/mnt/c/Users/medel/OneDrive/Desktop/proiect so/test_folder"
+./program "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/test_folder"
+
+./program "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/test_folder" "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/test_folder2" "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/test_folder3"
