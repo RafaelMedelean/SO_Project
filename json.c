@@ -6,6 +6,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 void generate_json(const char *path, const char *relative_path, json_object *jarray) {
     DIR *dir = opendir(path);
@@ -178,10 +179,14 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++)
     {
         const char *directory_name = argv[i];
-
         char json_file_name[256];
         time_t now = time(NULL);
         struct tm *tm_now = localtime(&now);
+        int pid = fork();
+        if(pid == 0)
+        {
+            printf("Proces id: %d si nume director: %s \n",getpid() ,directory_name);
+        }
         snprintf(json_file_name, sizeof(json_file_name), "%d_%02d_%02d_%02d_%02d_%02d.json",
                 tm_now->tm_year + 1900, tm_now->tm_mon + 1, tm_now->tm_mday,
                 tm_now->tm_hour, tm_now->tm_min, tm_now->tm_sec + i);
@@ -225,6 +230,11 @@ int main(int argc, char **argv) {
         }
 
         json_object_put(jarray);    
+        if(pid == 0)
+        {
+            printf("Terminare proces id: %d \n",getpid());
+            exit(-1);
+        }
     }
     return 0;
 }
