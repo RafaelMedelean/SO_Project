@@ -17,9 +17,18 @@ process_file() {
   local file=$1
   local izolated_space_dir=$2
   permissions=$(stat -c %A "$file")
+  echo "File: $file, Permissions: $permissions"
   
-  if [ "$permissions" == "----------" ]; then
+  if [ "$permissions" == "-rwxrwxrwx" ]; then # "----------"
     echo "Verifying $file for malicious content..."
+    
+    # Verificarea numărului de linii, cuvinte și caractere
+    local line_count=$(wc -l < "$file")
+    local word_count=$(wc -w < "$file")
+    local char_count=$(wc -m < "$file")
+    echo "Lines: $line_count, Words: $word_count, Characters: $char_count"
+    
+    # Căutăm în conținutul fișierului pattern-uri specifice de maleficență
     if grep -q -e 'corrupted' -e 'dangerous' -e 'risk' -e 'attack' -e 'malware' -e 'malicious' -e '[^\x00-\x7F]' "$file"; then
       echo "Malicious file detected: $file. Moving to $izolated_space_dir."
       mv "$file" "$izolated_space_dir"
