@@ -74,46 +74,10 @@ void check_and_isolate_file(const char *filepath, int write_pipe) {
     }
 }
 
-// void process_directory(const char *directory) {
-//     DIR *dir = opendir(directory);
-//     if (dir == NULL) {
-//         perror("Failed to open directory");
-//         exit(EXIT_FAILURE);
-//     }
-
-//     struct dirent *entry;
-//     int pipefd[2];
-//     if (pipe(pipefd) == -1) {
-//         perror("pipe failed");
-//         exit(EXIT_FAILURE);
-//     }
-
-//     while ((entry = readdir(dir)) != NULL) {
-//         if (entry->d_type == DT_REG) { 
-//             char full_path[1024];
-//             snprintf(full_path, sizeof(full_path), "%s/%s", directory, entry->d_name);
-//             pid_t pid = fork();
-//             if (pid == 0) {
-//                 close(pipefd[0]); 
-//                 check_and_isolate_file(full_path, pipefd[1]);
-//                 exit(0);
-//             }
-//         }
-//     }
-//     close(pipefd[1]); 
-
-//     char buffer[1024];
-//     int nread;
-//     while ((nread = read(pipefd[0], buffer, sizeof(buffer)-1)) > 0) {
-//         buffer[nread] = '\0';
-//         printf("Malicious file: %s\n", buffer);
-//     }
-//     closedir(dir);
-// }
-
-void process_directory(const char *directory) {
+int process_directory(const char *directory) {
     ensure_isolated_dir_exists();
-    
+    int malicious_files_counter = 0;
+
     DIR *dir = opendir(directory);
     if (dir == NULL) {
         perror("Failed to open directory");
@@ -154,9 +118,12 @@ void process_directory(const char *directory) {
             perror("Failed to move malicious file");
         } else {
             printf("File moved to: %s\n", newpath);
+            malicious_files_counter++;
         }
     }
     closedir(dir);
+
+    return malicious_files_counter;
 }
 
 
@@ -347,7 +314,8 @@ int main(int argc, char **argv) {
         if(pid == 0)
         {
             printf("Proces id: %d si nume director: %s \n",getpid() ,directory_name);
-            process_directory(argv[i]);
+            int counter_malicious = process_directory(argv[i]);
+            printf("Child with pid = %d , found %d malicious files", getpid(), counter_malicious);
         }
         snprintf(json_file_name, sizeof(json_file_name), "%s_%d_%02d_%02d_%02d_%02d_%02d.json",
                 directory_name, // Include the directory name in the file name

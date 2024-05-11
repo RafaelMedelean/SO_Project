@@ -11,7 +11,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the compiled program with the specified directory
-./program "test_folder2"
+./program "test_folder2" "test_folder" "test_folder3"
 if [ $? -ne 0 ]; then
     echo "Execution failed"
     exit 1
@@ -34,7 +34,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-./program "test_folder2"
+./program "test_folder2" "test_folder" "test_folder3"
 if [ $? -ne 0 ]; then
     echo "Execution failed"
     exit 1
