@@ -3,6 +3,9 @@ gcc json.c -o program -ljson-c
 
 ./program "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/test_folder" "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/test_folder2" "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/test_folder3"
 
+./program "test_folder" "test_folder2" "test_folder3"
+./program "test_folder2"
+
 chmod +x scan_for_malicious_files.sh
 
 mkdir izolated_space_dir
@@ -12,3 +15,7 @@ chmod 000 dir1/File1  # Setează fișierul fără niciun drept
 echo "This is a malicious test" > dir1/File1  # Adaugă conținut periculos
 
 ./scan_for_malicious_files.sh izolated_space_dir dir1 dir2 dir3
+
+
+gcc json_moving_child_process.c -o program -ljson-c
+./program "test_folder2" "test_folder"

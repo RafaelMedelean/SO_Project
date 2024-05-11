@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 void generate_json(const char *path, const char *relative_path, json_object *jarray) {
     DIR *dir = opendir(path);
@@ -53,7 +54,39 @@ void save_json_to_file(json_object *jobj, const char *filename) {
     fclose(file);
 }
 
-char *find_last_json_file(const char *directory, const char *exclude_file_name) {
+// char *find_last_json_file(const char *directory, const char *exclude_file_name) {
+//     DIR *dir;
+//     struct dirent *entry;
+//     char *last_file_name = NULL;
+//     dir = opendir(directory);
+//     if (!dir) {
+//         perror("Eroare la deschiderea directorului");
+//         return NULL;
+//     }
+    
+//     while ((entry = readdir(dir)) != NULL) {
+//         if (entry->d_type == DT_REG && strcmp(entry->d_name, exclude_file_name) != 0) {
+//             const char *ext = strrchr(entry->d_name, '.');
+//             if (!ext || strcmp(ext, ".json") != 0) continue;
+            
+//             if (!last_file_name || strcmp(entry->d_name, last_file_name) > 0) {
+//                 if (last_file_name) free(last_file_name);
+//                 last_file_name = strdup(entry->d_name);
+//             }
+//         }
+//     }
+//     closedir(dir);
+
+//     if (last_file_name) {
+//         char *full_path = malloc(strlen(directory) + strlen(last_file_name) + 2);
+//         sprintf(full_path, "%s/%s", directory, last_file_name);
+//         free(last_file_name);
+//         return full_path;
+//     } else {
+//         return NULL;
+//     }
+// }
+char *find_last_json_file(const char *directory, const char *current_directory_name, const char *current_snapshot_name) {
     DIR *dir;
     struct dirent *entry;
     char *last_file_name = NULL;
@@ -62,15 +95,22 @@ char *find_last_json_file(const char *directory, const char *exclude_file_name) 
         perror("Eroare la deschiderea directorului");
         return NULL;
     }
-    
+
+    char prefix[512];
+    snprintf(prefix, sizeof(prefix), "%s_", current_directory_name); // Prefix to filter files by directory
+
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG && strcmp(entry->d_name, exclude_file_name) != 0) {
+        if (entry->d_type == DT_REG) {
+            // Check if it's a JSON file and not the current snapshot being generated
             const char *ext = strrchr(entry->d_name, '.');
-            if (!ext || strcmp(ext, ".json") != 0) continue;
-            
-            if (!last_file_name || strcmp(entry->d_name, last_file_name) > 0) {
-                if (last_file_name) free(last_file_name);
-                last_file_name = strdup(entry->d_name);
+            if (!ext || strcmp(ext, ".json") != 0 || strcmp(entry->d_name, current_snapshot_name) == 0) continue;
+
+            // Check if it matches the prefix and is not the current file
+            if (strncmp(entry->d_name, prefix, strlen(prefix)) == 0) {
+                if (!last_file_name || strcmp(entry->d_name, last_file_name) > 0) {
+                    free(last_file_name);
+                    last_file_name = strdup(entry->d_name);
+                }
             }
         }
     }
@@ -160,6 +200,19 @@ void read_and_print_json(const char *filename) {
     json_object_put(jobj);
 }
 
+void execute_script_on_directory(const char *directory_path) {
+    printf("Scanning and cleaning directory: %s\n", directory_path);
+    pid_t pid = fork();
+    if (pid == 0) { // Child process
+        execl("scan_for_malicious_files.sh", "scan_for_malicious_files.sh", "izolated_space_dir", directory_path, NULL);
+        perror("Failed to execute script");
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) {
+        wait(NULL); // Wait for the script to finish
+    } else {
+        perror("Fork failed");
+    }
+}
 
 int main(int argc, char **argv) {
     if (argc > 10) {
@@ -167,7 +220,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Utilizare: %s <nume_director>\n", argv[0]);
         return 1;
     }
-    const char *target_directory = "/mnt/c/Users/medel/Desktop/proiect_so/SO_Project/saved_json_file/";
+    const char *target_directory = "saved_json_file/";
     struct stat st = {0};
     if (stat(target_directory, &st) == -1) {
         if (mkdir(target_directory, 0700) == -1) {
@@ -179,6 +232,9 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++)
     {
         const char *directory_name = argv[i];
+
+        execute_script_on_directory(directory_name);
+
         char json_file_name[256];
         time_t now = time(NULL);
         struct tm *tm_now = localtime(&now);
@@ -187,7 +243,8 @@ int main(int argc, char **argv) {
         {
             printf("Proces id: %d si nume director: %s \n",getpid() ,directory_name);
         }
-        snprintf(json_file_name, sizeof(json_file_name), "%d_%02d_%02d_%02d_%02d_%02d.json",
+        snprintf(json_file_name, sizeof(json_file_name), "%s_%d_%02d_%02d_%02d_%02d_%02d.json",
+                directory_name, // Include the directory name in the file name
                 tm_now->tm_year + 1900, tm_now->tm_mon + 1, tm_now->tm_mday,
                 tm_now->tm_hour, tm_now->tm_min, tm_now->tm_sec + i);
 
@@ -204,8 +261,8 @@ int main(int argc, char **argv) {
 
         read_and_print_json(full_path);
 
-        char *exclude_file_name = strrchr(json_file_name, '/') ? strrchr(json_file_name, '/') + 1 : json_file_name;
-        char *last_json_path = find_last_json_file(target_directory, exclude_file_name);
+        char *current_snapshot_name = json_file_name; // This is the filename you are currently writing to
+        char *last_json_path = find_last_json_file(target_directory, directory_name, current_snapshot_name);
 
         if (last_json_path && strcmp(last_json_path, full_path) != 0) {
             json_object *last_saved_json = NULL;
@@ -238,7 +295,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-
-
-
-

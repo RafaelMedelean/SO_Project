@@ -19,7 +19,7 @@ process_file() {
   permissions=$(stat -c %A "$file")
   echo "File: $file, Permissions: $permissions"
   
-  if [ "$permissions" == "-rwxrwxrwx" ]; then # "----------"
+  if [ "$permissions" == "-r-xr-xr-x" ]; then # ""----------
     echo "Verifying $file for malicious content..."
     
     # Verificarea numărului de linii, cuvinte și caractere
