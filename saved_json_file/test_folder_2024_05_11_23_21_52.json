@@ -1,0 +1,27 @@
+[
+  {
+    "nume":"cox.txt",
+    "tip":"fisier",
+    "cale":"\/cox.txt"
+  },
+  {
+    "nume":"empty",
+    "tip":"fisier",
+    "cale":"\/empty"
+  },
+  {
+    "nume":"io.txt",
+    "tip":"fisier",
+    "cale":"\/io.txt"
+  },
+  {
+    "nume":"jax.c",
+    "tip":"fisier",
+    "cale":"\/jax.c"
+  },
+  {
+    "nume":"u.txt",
+    "tip":"fisier",
+    "cale":"\/u.txt"
+  }
+]

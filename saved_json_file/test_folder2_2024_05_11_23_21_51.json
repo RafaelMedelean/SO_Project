@@ -1,0 +1,12 @@
+[
+  {
+    "nume":"op.txt",
+    "tip":"fisier",
+    "cale":"\/op.txt"
+  },
+  {
+    "nume":"text.txt",
+    "tip":"fisier",
+    "cale":"\/text.txt"
+  }
+]
